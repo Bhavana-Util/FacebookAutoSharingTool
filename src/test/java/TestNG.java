@@ -8,12 +8,15 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import pageObjects.HomePage;
 import pageObjects.LoginPage;
+import util.ReadData;
 
 import java.nio.file.Paths;
 
 public class TestNG extends LoginPage {
 
     public WebDriver driver;
+    ReadData dataList = new ReadData();
+
 
     @Test
     public void facebookLogin() {

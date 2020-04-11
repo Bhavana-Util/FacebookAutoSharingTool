@@ -2,7 +2,7 @@ package util;
 
 import java.util.ArrayList;
 
-public class ReadExcel {
+public class ReadData {
 
 
     public ArrayList getData(){
