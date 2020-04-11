@@ -1,7 +1,6 @@
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -9,13 +8,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
-import pageObjects.HomePage;
-import pageObjects.LoginPage;
 import util.ReadData;
 
 import java.nio.file.Paths;
 
-public class TestNG extends LoginPage {
+public class TestNG {
 
     //declare objects
     public WebDriver driver;
@@ -52,7 +49,7 @@ public class TestNG extends LoginPage {
         //FindRequiredPost
 
         //Start Sharing
-        
+
     }
 
     @BeforeClass
