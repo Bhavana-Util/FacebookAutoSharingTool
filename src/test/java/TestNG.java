@@ -1,7 +1,10 @@
 import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterClass;
@@ -13,8 +16,16 @@ import util.ReadData;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class TestNG {
+
+    //run Configurations
+    boolean isFirefoxBrowser = false;
+    boolean isMacOS = true;
+    //Non-Editable run Configurations
+    String osName = isMacOS?"mac":"windows";
+    String browserName = isFirefoxBrowser?"firefox":"chrome";
 
     //declare objects
     public WebDriver driver;
@@ -23,13 +34,20 @@ public class TestNG {
     WebDriverWait wait;
     ArrayList<String> facebookGroupList;
     Actions action;
+    HashMap<String,String> macDriverPathList = new HashMap<String,String>();
+    HashMap<String,String> windowsDriverPathList = new HashMap<String,String>();
 
-    //Constants
+    //constants
     String facebookEmailId = "kalamtechcorp@gmail.com";
     String facebookPassword = "Vivek@Abhi2020";
     String pageName = "Kalam Tech Corp";
-    String websiteName = "https://www.facebook.com/";
+    String websiteURL = "https://www.facebook.com/";
+
+
     String firefoxDriverPathMacOS = Paths.get("").toAbsolutePath().toString() + "//jars//geckodriver";
+    String chromeDriverPathMacOS = Paths.get("").toAbsolutePath().toString() + "//jars//chromedriver";
+    String firefoxDriverPathWindowsOS = Paths.get("").toAbsolutePath().toString() + "//jars//geckodriver.exe";
+    String chromeDriverPathWindowsOS = Paths.get("").toAbsolutePath().toString() + "//jars//chromedriver.exe";
     String personalName = "Kalam Techcorp";
     String groupName;
     String saySomethingElseDescription = "Test Post";
@@ -49,7 +67,6 @@ public class TestNG {
     String selectedShareByNameXpath = "//*[text()='Group:'] /ancestor::div[1]/preceding-sibling::div//span[contains(text(),'" + personalName + "')]";
     String pageNameInDropdownXpath = "//*[@data-tooltip-content='" + pageName + "']";
     String personNameInDropDown ="//*[contains(text(),'Kalam Techcorp')]/span[contains(text(),'(You)')]";
-
     String groupNameInSuggestionDropDownXpath = "//ul[@role='listbox']//span[text()='%']";
     String groupImageInGroupNameFieldXpath = "//input[@placeholder='Group name']/ancestor::span/img";
     String saySomethingElseTextFieldXpath = "//*[@aria-label='Say something about this...']//descendant::span";
@@ -172,17 +189,10 @@ public class TestNG {
 
     @BeforeClass
     public void beforeClass() {
-
-        FirefoxOptions options = new FirefoxOptions();
-        options.addPreference("dom.disable_beforeunload", true);
-        options.addPreference("dom.webnotifications.enabled", false);
-
-        System.setProperty("webdriver.gecko.driver", firefoxDriverPathMacOS);
-        driver = new FirefoxDriver(options);
-        driver.manage().window().maximize();
-        driver.get(websiteName);
-        wait = new WebDriverWait(driver, 10);
-    }
+        setUpPreferencesAndLaunchBrowser(browserName);
+        OpenWebsiteHomePage(websiteURL);
+        setupExplicitWait(10);
+        }
 
     @AfterClass
     public void afterClass() {
@@ -194,5 +204,69 @@ public class TestNG {
         String dynamicXpath = xpath.replaceAll("%", variable);
         //replace || with variable name
         return dynamicXpath;
+    }
+
+    public String getDriverPath(String OSName, String browserName) {
+
+        String driverPath = "";
+
+        setDriverPath();
+        if (osName.equalsIgnoreCase("mac") && browserName.equalsIgnoreCase("firefox")) {
+            driverPath = macDriverPathList.get("firefox");
+        } else if (osName.equalsIgnoreCase("mac") && browserName.equalsIgnoreCase("chrome")) {
+            driverPath = macDriverPathList.get("chrome");
+        } else if (osName.equalsIgnoreCase("windows") && browserName.equalsIgnoreCase("firefox")) {
+            driverPath = windowsDriverPathList.get("firefox");
+        } else if (osName.equalsIgnoreCase("windows") && browserName.equalsIgnoreCase("chrome")) {
+            driverPath = windowsDriverPathList.get("chrome");
+        } else
+            System.out.println("OS Name or Browser name is not correct");
+
+        return driverPath;
+    }
+
+    public void setDriverPath() {
+        macDriverPathList.put("firefox", firefoxDriverPathMacOS);
+        macDriverPathList.put("chrome", chromeDriverPathMacOS);
+        windowsDriverPathList.put("firefox", firefoxDriverPathWindowsOS);
+        windowsDriverPathList.put("chrome", chromeDriverPathWindowsOS);
+    }
+
+    public void setUpPreferencesAndLaunchBrowser(String browserName){
+        if (browserName.equalsIgnoreCase("firefox")){
+            System.setProperty("webdriver.gecko.driver", getDriverPath(osName,browserName));
+            driver = new FirefoxDriver(getFireFoxPreferences());
+
+        }
+        else if (browserName.equalsIgnoreCase("chrome")){
+            System.setProperty("webdriver.chrome.driver", getDriverPath(osName,browserName));
+            driver = new ChromeDriver(getChromePreferences());
+        }
+        else
+            System.out.println("Browser name is not correct");
+
+            driver.manage().window().maximize();
+    }
+
+    public FirefoxOptions getFireFoxPreferences(){
+        FirefoxOptions options = new FirefoxOptions();
+        options.addPreference("dom.disable_beforeunload", true);
+        options.addPreference("dom.webnotifications.enabled", false);
+        options.addPreference("app.update.doorhanger", false);
+        return options;
+    }
+
+    public void OpenWebsiteHomePage(String url){
+        driver.get(url);
+    }
+
+    public void setupExplicitWait(int timeOutInSeconds){
+        wait = new WebDriverWait(driver, timeOutInSeconds);
+    }
+
+    public ChromeOptions getChromePreferences(){
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--disable-notifications");
+        return options;
     }
 }
