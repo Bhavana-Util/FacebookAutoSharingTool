@@ -5,6 +5,8 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.FluentWait;
+import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -12,10 +14,13 @@ import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 import util.ReadData;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class TestNG {
 
@@ -30,7 +35,7 @@ public class TestNG {
     public WebDriver driver;
     ReadData data = new ReadData();
     SoftAssert softassert = new SoftAssert();
-    WebDriverWait wait;
+    Wait<WebDriver> wait;
     ArrayList<String> facebookGroupList;
     Actions action;
     HashMap<String, String> macDriverPathList = new HashMap<String, String>();
@@ -41,6 +46,11 @@ public class TestNG {
     String facebookPassword = "Vivek@Abhi2020";
     String pageName = "Kalam Tech Corp";
     String websiteURL = "https://www.facebook.com/";
+    public final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_RESET = "\u001B[0m";
+
 
 
     String firefoxDriverPathMacOS = Paths.get("").toAbsolutePath().toString() + "//jars//geckodriver";
@@ -129,7 +139,8 @@ public class TestNG {
 
                 //Expect group Name input field displayed
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(groupNameInputFieldXpath)));
-                WebElement groupNameInputField = driver.findElement(By.xpath(groupNameInputFieldXpath));
+                List<WebElement> groupNameInputFieldList = driver.findElements(By.xpath(groupNameInputFieldXpath));
+                WebElement groupNameInputField = groupNameInputFieldList.get(groupNameInputFieldList.size()-1);
                 groupNameInputField.click();
 
                 //Expect share by dropdown icon is displayed & click
@@ -142,10 +153,10 @@ public class TestNG {
                 WebElement pageNameInDropDown = driver.findElement(By.xpath(personNameInDropDown));
                 pageNameInDropDown.click();
 
-                /*//expect Page Name is selected in share-By Option
+                //expect Page Name is selected in share-By Option
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(selectedShareByNameXpath)));
                 WebElement selectedPersonalName = driver.findElement(By.xpath(selectedShareByNameXpath));
-                selectedPersonalName.click();*/
+                selectedPersonalName.click();
 
                 //enter group Name
                 groupNameInputField.sendKeys(groupName);
@@ -158,46 +169,57 @@ public class TestNG {
                 //Expect group Image is displayed in group Name field
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(groupImageInGroupNameFieldXpath)));
 
-               /* //Add Say Something Else Description
-                WebElement saySomethingElseTextField = driver.findElement(By.xpath(saySomethingElseTextFieldXpath));
+                //Add Say Something Else Description
+                /*List<WebElement> saySomethingElseTextFieldList = driver.findElements(By.xpath(saySomethingElseTextFieldXpath));
+                WebElement saySomethingElseTextField = saySomethingElseTextFieldList.get(saySomethingElseTextFieldList.size()-1);
                 saySomethingElseTextField.sendKeys(saySomethingElseDescription);*/
 
                 //Click on Post
                 WebElement postLink = driver.findElement(By.xpath(postLinkXpath));
                 postLink.click();
-                System.out.println("Post successfully shared for group. Waiting for success message." + facebookGroupList.get(i));
+                System.out.println(ANSI_GREEN + "Post successfully shared for group. Waiting for success message." + facebookGroupList.get(i)+ ANSI_RESET);
             } catch (Exception e) {
                 System.out.println("Error occured while sharing. Post is not shared on group " + facebookGroupList.get(i) + ".");
+                System.out.println(ANSI_RED +  e.getCause().getStackTrace() + ANSI_RESET);
+
                 //Click on Cancel & verify that popup has been closed
-                WebElement cancelLink = driver.findElement(By.xpath(cancelLinkXpath));
-                if (cancelLink.isDisplayed())
-                    cancelLink.click();
-                else {
-                    action = new Actions(driver);
+                if (driver.findElements(By.xpath(cancelLinkXpath)).size() > 0) {
+                    driver.findElement(By.xpath(cancelLinkXpath)).click();
+                } else {
                     action.sendKeys(Keys.ESCAPE);
                 }
                 continue;
             }
             try {
                 //wait for successful Message to be displayed
-                wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(successMessageXpath)));
-
+                    wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(successMessageXpath)));
+                if (driver.findElements(By.xpath(successMessageXpath)).size() > 0) {
+                    List<WebElement> successMessageList = driver.findElements(By.xpath(successMessageXpath));
+                    WebElement successMessage = successMessageList.get(successMessageList.size() - 1);
+                    softassert.assertTrue(successMessage.isDisplayed());
+                }
                 //assert if post been shared successfully for group
-                WebElement groupNameOnSuccessMessage = driver.findElement(By.xpath(groupNameOnSuccessMessageXpath));
+                List<WebElement> groupNameOnSuccessMessageList = driver.findElements(By.xpath(groupNameOnSuccessMessageXpath));
+                WebElement groupNameOnSuccessMessage = groupNameOnSuccessMessageList.get(groupNameOnSuccessMessageList.size()-1);
                 softassert.assertEquals(groupName, groupNameOnSuccessMessage.getText());
                 System.out.println("Success message verified for " + facebookGroupList.get(i));
 
+            } catch (NoSuchElementException e2){
+                System.out.println(ANSI_GREEN + "Ignoring No Such Element Exception for after click on post purposely"+ANSI_RESET);
+                System.out.println( e2.getCause().getStackTrace());
+                if (driver.findElements(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).size() > 0) {
+                    driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).click();
+                }
+
             } catch (Exception e) {
-                System.out.println("Error occured during success message verification for " + facebookGroupList.get(i) + ".");
+                System.out.println(ANSI_YELLOW + "Error occured during success message verification for " + facebookGroupList.get(i) + "."+ ANSI_RESET);
+                System.out.println(ANSI_RED + e.getCause().getStackTrace()+ANSI_RESET);
                 //Click on Cancel & verify that popup has been closed
-                WebElement shareSuccessfulPopUpCloseButton = driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath));
-                if (driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).isDisplayed())
-                    shareSuccessfulPopUpCloseButton.click();
-                else {
-                    action = new Actions(driver);
-                    action.sendKeys(Keys.ESCAPE);
+                if (driver.findElements(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).size() > 0) {
+                    driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).click();
                 }
             }
+            action.sendKeys(Keys.ESCAPE);
         }
     }
 
@@ -205,7 +227,8 @@ public class TestNG {
     public void beforeClass() {
         setUpPreferencesAndLaunchBrowser(browserName);
         OpenWebsiteHomePage(websiteURL);
-        setupExplicitWait(10);
+        setupExplicitWait(15);
+        action = new Actions(driver);
     }
 
     @AfterClass
@@ -273,7 +296,11 @@ public class TestNG {
     }
 
     public void setupExplicitWait(int timeOutInSeconds) {
-        wait = new WebDriverWait(driver, timeOutInSeconds);
+
+        wait = new FluentWait<>(driver)
+                .withTimeout(timeOutInSeconds, TimeUnit.SECONDS)
+                .pollingEvery(timeOutInSeconds/(timeOutInSeconds*2), TimeUnit.SECONDS)
+                .ignoring(NoSuchElementException.class);
     }
 
     public ChromeOptions getChromePreferences() {
