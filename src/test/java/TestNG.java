@@ -4,7 +4,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterClass;
@@ -21,11 +20,11 @@ import java.util.HashMap;
 public class TestNG {
 
     //run Configurations
-    boolean isFirefoxBrowser = false;
+    boolean isFirefoxBrowser = true;
     boolean isMacOS = true;
     //Non-Editable run Configurations
-    String osName = isMacOS?"mac":"windows";
-    String browserName = isFirefoxBrowser?"firefox":"chrome";
+    String osName = isMacOS ? "mac" : "windows";
+    String browserName = isFirefoxBrowser ? "firefox" : "chrome";
 
     //declare objects
     public WebDriver driver;
@@ -34,8 +33,8 @@ public class TestNG {
     WebDriverWait wait;
     ArrayList<String> facebookGroupList;
     Actions action;
-    HashMap<String,String> macDriverPathList = new HashMap<String,String>();
-    HashMap<String,String> windowsDriverPathList = new HashMap<String,String>();
+    HashMap<String, String> macDriverPathList = new HashMap<String, String>();
+    HashMap<String, String> windowsDriverPathList = new HashMap<String, String>();
 
     //constants
     String facebookEmailId = "kalamtechcorp@gmail.com";
@@ -66,14 +65,16 @@ public class TestNG {
     String shareByDropdownXpath = "//*[text()='Group:'] /ancestor::div[1]/preceding-sibling::div//i";
     String selectedShareByNameXpath = "//*[text()='Group:'] /ancestor::div[1]/preceding-sibling::div//span[contains(text(),'" + personalName + "')]";
     String pageNameInDropdownXpath = "//*[@data-tooltip-content='" + pageName + "']";
-    String personNameInDropDown ="//*[contains(text(),'Kalam Techcorp')]/span[contains(text(),'(You)')]";
+    String personNameInDropDown = "//*[contains(text(),'Kalam Techcorp')]/span[contains(text(),'(You)')]";
     String groupNameInSuggestionDropDownXpath = "//ul[@role='listbox']//span[text()='%']";
     String groupImageInGroupNameFieldXpath = "//input[@placeholder='Group name']/ancestor::span/img";
-    String saySomethingElseTextFieldXpath = "//*[@aria-label='Say something about this...']//descendant::span";
+    String saySomethingElseTextFieldXpath = "//*[@aria-label='Say something about this...']/descendant::div[1]";
     String postLinkXpath = "//button[@type='submit' and text()='Cancel']/following-sibling::button[@type='submit' and text()='Post']";
-    String successMessageXpath = "//div[@id='ariaPoliteAlert']//following-sibling::div//*[contains(text(),'This has been successfully shared with ')] ";
+    String successMessageXpath = "//div[@id='ariaPoliteAlert']//following-sibling::div//*[contains(text(),'This has been successfully shared with ')]";
     String groupNameOnSuccessMessageXpath = "//div[@id='ariaPoliteAlert']//following-sibling::div//strong/a";
     String cancelLinkXpath = "//button[@type='submit' and text()='Cancel']";
+    String shareSuccessfulPopUpCloseButtonXpath = "//button[contains(@class,'layerCancel')]";
+
 
     @Test
     public void facebookLogin() throws IOException {
@@ -157,28 +158,41 @@ public class TestNG {
                 //Expect group Image is displayed in group Name field
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(groupImageInGroupNameFieldXpath)));
 
-                /*//Add Say Something Else Description
-                WebElement saySomethingElseTextField  = driver.findElement(By.xpath(saySomethingElseTextFieldXpath));
+               /* //Add Say Something Else Description
+                WebElement saySomethingElseTextField = driver.findElement(By.xpath(saySomethingElseTextFieldXpath));
                 saySomethingElseTextField.sendKeys(saySomethingElseDescription);*/
 
-                //Click on Post & verify that post has been re-shared
+                //Click on Post
                 WebElement postLink = driver.findElement(By.xpath(postLinkXpath));
                 postLink.click();
-
-                //wait for successful Message to be displayed
-                //wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(successMessageXpath)));
-
-                //assert if post been shared successfully for group in a loop
-                //WebElement  groupNameOnSuccessMessage = driver.findElement(By.xpath(groupNameOnSuccessMessageXpath));
-                //softassert.assertEquals(groupName,groupNameOnSuccessMessage.getText());
-                System.out.println("Post successfully shared for group: " + facebookGroupList.get(i));
-
+                System.out.println("Post successfully shared for group. Waiting for success message." + facebookGroupList.get(i));
             } catch (Exception e) {
                 System.out.println("Error occured while sharing. Post is not shared on group " + facebookGroupList.get(i) + ".");
                 //Click on Cancel & verify that popup has been closed
                 WebElement cancelLink = driver.findElement(By.xpath(cancelLinkXpath));
                 if (cancelLink.isDisplayed())
                     cancelLink.click();
+                else {
+                    action = new Actions(driver);
+                    action.sendKeys(Keys.ESCAPE);
+                }
+                continue;
+            }
+            try {
+                //wait for successful Message to be displayed
+                wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(successMessageXpath)));
+
+                //assert if post been shared successfully for group
+                WebElement groupNameOnSuccessMessage = driver.findElement(By.xpath(groupNameOnSuccessMessageXpath));
+                softassert.assertEquals(groupName, groupNameOnSuccessMessage.getText());
+                System.out.println("Success message verified for " + facebookGroupList.get(i));
+
+            } catch (Exception e) {
+                System.out.println("Error occured during success message verification for " + facebookGroupList.get(i) + ".");
+                //Click on Cancel & verify that popup has been closed
+                WebElement shareSuccessfulPopUpCloseButton = driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath));
+                if (driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).isDisplayed())
+                    shareSuccessfulPopUpCloseButton.click();
                 else {
                     action = new Actions(driver);
                     action.sendKeys(Keys.ESCAPE);
@@ -192,7 +206,7 @@ public class TestNG {
         setUpPreferencesAndLaunchBrowser(browserName);
         OpenWebsiteHomePage(websiteURL);
         setupExplicitWait(10);
-        }
+    }
 
     @AfterClass
     public void afterClass() {
@@ -232,23 +246,21 @@ public class TestNG {
         windowsDriverPathList.put("chrome", chromeDriverPathWindowsOS);
     }
 
-    public void setUpPreferencesAndLaunchBrowser(String browserName){
-        if (browserName.equalsIgnoreCase("firefox")){
-            System.setProperty("webdriver.gecko.driver", getDriverPath(osName,browserName));
+    public void setUpPreferencesAndLaunchBrowser(String browserName) {
+        if (browserName.equalsIgnoreCase("firefox")) {
+            System.setProperty("webdriver.gecko.driver", getDriverPath(osName, browserName));
             driver = new FirefoxDriver(getFireFoxPreferences());
 
-        }
-        else if (browserName.equalsIgnoreCase("chrome")){
-            System.setProperty("webdriver.chrome.driver", getDriverPath(osName,browserName));
+        } else if (browserName.equalsIgnoreCase("chrome")) {
+            System.setProperty("webdriver.chrome.driver", getDriverPath(osName, browserName));
             driver = new ChromeDriver(getChromePreferences());
-        }
-        else
+        } else
             System.out.println("Browser name is not correct");
 
-            driver.manage().window().maximize();
+        driver.manage().window().maximize();
     }
 
-    public FirefoxOptions getFireFoxPreferences(){
+    public FirefoxOptions getFireFoxPreferences() {
         FirefoxOptions options = new FirefoxOptions();
         options.addPreference("dom.disable_beforeunload", true);
         options.addPreference("dom.webnotifications.enabled", false);
@@ -256,15 +268,15 @@ public class TestNG {
         return options;
     }
 
-    public void OpenWebsiteHomePage(String url){
+    public void OpenWebsiteHomePage(String url) {
         driver.get(url);
     }
 
-    public void setupExplicitWait(int timeOutInSeconds){
+    public void setupExplicitWait(int timeOutInSeconds) {
         wait = new WebDriverWait(driver, timeOutInSeconds);
     }
 
-    public ChromeOptions getChromePreferences(){
+    public ChromeOptions getChromePreferences() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-notifications");
         return options;
