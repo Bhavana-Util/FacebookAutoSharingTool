@@ -7,14 +7,11 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Wait;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 import util.ReadData;
-
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -211,9 +208,9 @@ public class TestNG {
                     driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).click();
                 }
 
-            } catch (Exception e) {
+            } catch (Exception e3) {
                 System.out.println(ANSI_YELLOW + "Error occured during success message verification for " + facebookGroupList.get(i) + "."+ ANSI_RESET);
-                System.out.println(ANSI_RED + e.getCause().getStackTrace()+ANSI_RESET);
+                System.out.println(ANSI_RED + e3.getCause().getStackTrace()+ANSI_RESET);
                 //Click on Cancel & verify that popup has been closed
                 if (driver.findElements(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).size() > 0) {
                     driver.findElement(By.xpath(shareSuccessfulPopUpCloseButtonXpath)).click();
